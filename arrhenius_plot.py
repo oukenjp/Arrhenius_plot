@@ -23,9 +23,9 @@ point_size = 50
 legend_fontsize = 12
 default_linestyle = "-"
 main_title = ''
-outfile = "arrhenius.pdf"
+outfile = "arrhenius.jpg"
 use_fit = True  # 是否进行拟合
-show_Ea = False  # 是否在图上显示Ea值
+show_Ea = True  # 是否在图上显示Ea值
 # === 手动配置上坐标轴的刻度值 ===
 # 定义你希望显示的特定温度值
 specific_temperatures = [30, 50]
@@ -179,8 +179,8 @@ for idx, f in enumerate(files):
             x_end = x_bottom[0]
             y_end = y_fit[0]
 
-            dx = (max(x_bottom) - min(x_bottom)) * 0.2
-            dy = (max(y_fit)-min(y_fit)) * 0.15
+            dx = (max(x_bottom) - min(x_bottom)) * 0.28
+            dy = (max(y_fit)-min(y_fit)) * 0.1
 
             x0, x1 = min(x_bottom), max(x_bottom)
             y0, y1 = np.polyval(coeffs, [x0, x1])
@@ -215,6 +215,12 @@ plt.title(main_title, fontdict=font_title)
 # ax.legend(loc="best", fontsize=legend_fontsize)
 plt.legend(handles=handles, labels=labels, loc="best", fontsize=legend_fontsize)
 
-plt.grid(True, linestyle='--', alpha=0.5)
+# 绘制竖直网格线
+x_bottom_for_top_ticks = 1000 / (np.array(desired_temperatures_celsius) + 273.15)
+x_min, x_max = ax.get_xlim()
+x_in_range = [x for x in x_bottom_for_top_ticks if x_min <= x <= x_max]
+for x in x_in_range:
+    ax.axvline(x, linestyle='--', color='gray', alpha=0.5)
+
 # plt.show()
 plt.savefig(outfile)
