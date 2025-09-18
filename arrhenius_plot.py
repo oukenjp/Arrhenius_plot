@@ -47,23 +47,22 @@ def read_data(filename, comment_char="#", n_lines=10):
     if not os.path.exists(filename):
         raise FileNotFoundError(f"文件不存在: {filename}")
 
-    # newline='' 让 Python 自动处理 \r\n 和 \n 的兼容
+    # 预读几行
     sample_lines = []
     with open(filename, 'r', newline='') as f:
         for i in range(n_lines):
             line = f.readline()
             if not line:  # 文件提前结束
                 break
-            sample_lines.append(line)
+            sample_lines.append(line.rstrip("\r\n"))
 
-    # 去掉换行符（支持 \r\n / \n）
-    sample_lines = [line.rstrip("\r\n") for line in sample_lines]
     sample = "\n".join(sample_lines)
 
-    # 判断是否有注释行
-    has_comment = any(line.strip().startswith(comment_char) for line in sample_lines)
+    # 统计注释行
+    comment_lines = [line for line in sample_lines if line.strip().startswith(comment_char)]
+    n_comment_lines = len(comment_lines)
 
-    # Sniffer 检测分隔符
+    # 自动检测分隔符
     sniffer = csv.Sniffer()
     try:
         dialect = sniffer.sniff(sample)
@@ -73,12 +72,29 @@ def read_data(filename, comment_char="#", n_lines=10):
         delimiter = r"\s+"   # 回退到任意空白
         use_whitespace = True
 
+    # 判断首个非注释行是否为表头
+    header_line_index = n_comment_lines
+    header_tokens = sample_lines[header_line_index].split(delimiter if not use_whitespace else None)
+
+    def is_number(x):
+        try:
+            float(x)
+            return True
+        except ValueError:
+            return False
+
+    if all(not is_number(tok) for tok in header_tokens):  
+        header_option = 0  # 第一行是表头
+    else:
+        header_option = None  # 没有表头
+
     # 用 pandas 读数据
     return pd.read_csv(
         filename,
-        sep=delimiter if use_whitespace else delimiter,
-        comment=comment_char if has_comment else None,
-        engine="python"
+        sep=delimiter if not use_whitespace else delimiter,
+        comment=comment_char,
+        engine="python",
+        header=header_option
     )
 
 def auto_scan_files(extensions=['.xy', '.csv', '.txt', '.dat','']):
