@@ -21,22 +21,26 @@ tick_config = {
 line_width = 2
 point_size = 50
 legend_fontsize = 12
+figsize = (8,8)
 default_linestyle = "-"
 main_title = ''
 outfile = "arrhenius.jpg"
 use_fit = True  # 是否进行拟合
 show_Ea = True  # 是否在图上显示Ea值
-# === 手动配置上坐标轴的刻度值 ===
+
+# 颜色池（自动分配）
+auto_colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'cyan', 'magenta']
+auto_markers = ['o', 's', 'D', '^', 'v', '<', '>', 'p', '*', 'x', '+']
+
+# === 坐标轴的刻度配置 ===
 # 定义你希望显示的特定温度值
 specific_temperatures = [30, 50]
 # 定义你希望显示的固定步长温度范围
 range_temperatures = np.arange(100, 501, 50)
 # 将两个数组合并，得到最终的刻度列表
 desired_temperatures_celsius = np.concatenate((specific_temperatures, range_temperatures))
-figsize = (8,8)
-# 颜色池（自动分配）
-auto_colors = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'cyan', 'magenta']
-auto_markers = ['o', 's', 'D', '^', 'v', '<', '>', 'p', '*', 'x', '+']
+# 希望显示的grid线位置（对应下轴）
+grid_ticks = 1000 / (np.array(desired_temperatures_celsius) + 273.15)
 # =============================================
 
 def detect_delimiter(filename):
@@ -50,7 +54,6 @@ def detect_delimiter(filename):
             return dialect.delimiter
         except csv.Error:
             return ','
-
 
 def read_data(filename):
     delimiter = detect_delimiter(filename)
@@ -216,9 +219,8 @@ plt.title(main_title, fontdict=font_title)
 plt.legend(handles=handles, labels=labels, loc="best", fontsize=legend_fontsize)
 
 # 绘制竖直网格线
-x_bottom_for_top_ticks = 1000 / (np.array(desired_temperatures_celsius) + 273.15)
 x_min, x_max = ax.get_xlim()
-x_in_range = [x for x in x_bottom_for_top_ticks if x_min <= x <= x_max]
+x_in_range = [x for x in grid_ticks if x_min <= x <= x_max]
 for x in x_in_range:
     ax.axvline(x, linestyle='--', color='gray', alpha=0.5)
 
