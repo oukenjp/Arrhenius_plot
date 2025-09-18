@@ -24,7 +24,7 @@ legend_fontsize = 12
 figsize = (8,8)
 default_linestyle = "-"
 main_title = ''
-outfile = "arrhenius.jpg"
+outfile = "arrhenius.pdf"
 use_fit = True  # 是否进行拟合
 show_Ea = True  # 是否在图上显示Ea值
 
