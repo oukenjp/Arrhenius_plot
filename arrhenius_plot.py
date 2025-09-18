@@ -43,22 +43,43 @@ desired_temperatures_celsius = np.concatenate((specific_temperatures, range_temp
 grid_ticks = 1000 / (np.array(desired_temperatures_celsius) + 273.15)
 # =============================================
 
-def detect_delimiter(filename):
+def read_data(filename, comment_char="#", n_lines=10):
     if not os.path.exists(filename):
         raise FileNotFoundError(f"文件不存在: {filename}")
-    with open(filename, 'r', newline='') as f:
-        sample = f.read(1024)
-        sniffer = csv.Sniffer()
-        try:
-            dialect = sniffer.sniff(sample)
-            return dialect.delimiter
-        except csv.Error:
-            return ','
 
-def read_data(filename):
-    delimiter = detect_delimiter(filename)
-    data = pd.read_csv(filename, delimiter=delimiter, comment='#', engine='python', header=None)
-    return data
+    # newline='' 让 Python 自动处理 \r\n 和 \n 的兼容
+    sample_lines = []
+    with open(filename, 'r', newline='') as f:
+        for i in range(n_lines):
+            line = f.readline()
+            if not line:  # 文件提前结束
+                break
+            sample_lines.append(line)
+
+    # 去掉换行符（支持 \r\n / \n）
+    sample_lines = [line.rstrip("\r\n") for line in sample_lines]
+    sample = "\n".join(sample_lines)
+
+    # 判断是否有注释行
+    has_comment = any(line.strip().startswith(comment_char) for line in sample_lines)
+
+    # Sniffer 检测分隔符
+    sniffer = csv.Sniffer()
+    try:
+        dialect = sniffer.sniff(sample)
+        delimiter = dialect.delimiter
+        use_whitespace = False
+    except csv.Error:
+        delimiter = r"\s+"   # 回退到任意空白
+        use_whitespace = True
+
+    # 用 pandas 读数据
+    return pd.read_csv(
+        filename,
+        sep=delimiter if use_whitespace else delimiter,
+        comment=comment_char if has_comment else None,
+        engine="python"
+    )
 
 def auto_scan_files(extensions=['.xy', '.csv', '.txt', '.dat','']):
     """
